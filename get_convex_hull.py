@@ -86,7 +86,7 @@ def remove_in_point(points_list : np.ndarray):
     return points_list[mark]
 
 def true_convex_hull(points_set : np.ndarray) -> np.ndarray:
-    true_convex = convex_hull(points_set)    # 获得初级
+    true_convex = convex_hull(points_set)    # 获得初解
     points_count = len(true_convex)
     
     true_convex = remove_in_point(true_convex)
