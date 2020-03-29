@@ -70,7 +70,7 @@ def convex_hull(points_set : np.ndarray) -> np.ndarray:
 
 def deal_stack(stack : list) -> list:
     # 首尾连接处理
-    # 重新用该算法遍历一遍栈，用 i + 1 记录头部要去除点的个数
+    # 重新用该算法遍历一遍栈
     i = 0
     length = len(stack)
     expend = 0
