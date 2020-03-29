@@ -21,7 +21,7 @@ def __get_vector_sita__(v_1 : np.ndarray, v_2 : np.ndarray) -> float:
     return sita
 
 def convex_hull(points_set : np.ndarray) -> np.ndarray:
-    ''' Graham 算法实现 '''
+    ''' Graham 算法实现，已首尾相连 '''
     
     points_count = len(points_set)
     
@@ -50,73 +50,67 @@ def convex_hull(points_set : np.ndarray) -> np.ndarray:
     ''' 开始遍历 '''
     stack = [points_set[0], points_set[1]]
     for i in range(2, points_count):
-        current_vector = stack[-1] - stack[-2]
-        cross_prouct = np.cross(current_vector, points_set[i] - stack[-2])
         
         # 如果在右边，栈顶元素出栈
-        if cross_prouct < 0:
-            stack.pop()
+        while len(stack) >= 2:
+
+            current_vector = stack[-1] - stack[-2]
+            cross_prouct = np.cross(current_vector, points_set[i] - stack[-2])
+
+            if cross_prouct < 0:
+                stack.pop()
+            else:
+                break
 
         stack.append(points_set[i])
-
-    current_vector = stack[-1] - stack[-2]
-    cross_prouct = np.cross(current_vector, points_set[0] - stack[-2])
-
-    # 如果在右边，栈顶元素出栈
-    if cross_prouct < 0:
-        stack.pop()
-
-    # stack.append(points_set[0])
-
+    
+    stack = deal_stack(stack)
     return np.array(stack)
 
-def remove_in_point(points_list : np.ndarray):
-    ''' 去除在包内的点 '''
 
-    mark = [True] * len(points_list)
-    for i in range(-1, len(points_list) - 1):
-        current_vector = points_list[i + 1] - points_list[i - 1]
-        temp_vector = points_list[i] - points_list[i - 1]
-        cross_product = np.cross(current_vector, temp_vector)
+def deal_stack(stack : list) -> list:
+    # 首尾连接处理
+    # 重新用该算法遍历一遍栈，用 i + 1 记录头部要去除点的个数
+    i = 0
+    length = len(stack)
+    expend = 0
+
+    while i < length:
         
-        # 为左，因为是逆时针绕圈，所以在前进方向的左边说明在内
-        if cross_product >= 0:
-            mark[i] = False
-
-    return points_list[mark]
-
-def true_convex_hull(points_set : np.ndarray) -> np.ndarray:
-    true_convex = convex_hull(points_set)    # 获得初解
-    points_count = len(true_convex)
-    
-    true_convex = remove_in_point(true_convex)
-    points_count_after = len(true_convex)
-    
-    # 去除所有向内凹的边界点
-    while points_count > points_count_after:
-        true_convex = remove_in_point(true_convex)
-        points_count = points_count_after
-        points_count_after = len(true_convex)
+        while len(stack) >= 2:
+            current_vector = stack[-1] - stack[-2]
+            cross_prouct = np.cross(current_vector, stack[i] - stack[-2])
+            
+            if cross_prouct < 0:
+                stack.pop()
+                expend -= 1
+                if expend < 0: # 增长为负，说明要把尾部pop出，栈长度length - 1
+                    length -= 1 
+            else:
+                break
         
-    return true_convex
+        stack.append(stack[i])
+        expend += 1
+        i += 1
+    
+    return stack[length - 1:]   # 选取原栈长度后面的
 
 if __name__ == '__main__':
     
-    temp = np.ones((30, 2))
-    test_points_set = np.random.normal(10 * temp, 0.2)
-    base = np.sum(test_points_set, axis = 0) / 30
-    
-    convex = convex_hull(test_points_set.copy())
-    true_convex = true_convex_hull(test_points_set.copy())
+    from points_set_set import *
 
-    # 把头部包到尾处，以画图首尾相连
-    convex = np.vstack((convex, convex[0]))
-    true_convex = np.vstack((true_convex, true_convex[0]))
+    # test_points_set = test_points_set_5
+    test_points_set = random_points_set(30)
+    print(test_points_set)
+    base = np.sum(test_points_set, axis = 0) / len(test_points_set)
+    
+    convex_list = convex_hull(test_points_set.copy())
+    convex = np.array(convex_list)
+    # print(convex)
 
     plt.scatter(base[0], base[1], c = 'green')
     plt.scatter(test_points_set[:, 0], test_points_set[:, 1])
-    plt.scatter(convex[0][0], convex[0][1], c = 'yellow')
-    plt.plot(true_convex[:, 0], true_convex[:, 1], c='red')
+    plt.scatter(convex[0, 0], convex[0, 1], c = 'yellow')
     plt.plot(convex[:, 0], convex[:, 1])
 
     plt.show()
